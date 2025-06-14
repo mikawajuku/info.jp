@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>英単語トレーニングジム単語テスト</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; text-align: center; }
+    select, button, input { font-size: 1em; margin: 10px; padding: 5px; }
+    .choices button { display: block; margin: 5px auto; width: 200px; }
+    .hint-underline { letter-spacing: 0.2em; font-size: 1.6em; white-space: pre; }
+    #result { font-weight: bold; margin-top: 10px; font-size: 2.4em; }
+  </style>
+</head>
+<body>
+  <h1>英単語トレーニングジム単語テスト</h1>
+
+  <label for="mode">出題モード：</label>
+  <select id="mode" onchange="nextQuestion()">
+    <option value="jpToEn_write">日本語→英語（書く）</option>
+    <option value="jpToEn_mc">日本語→英語（4択）</option>
+    <option value="enToJp_mc">英語→日本語（4択）</option>
+  </select>
+
+  <div id="question" style="font-size: 1.5em; margin: 20px;"></div>
+  <div id="answerArea"></div>
+  <div id="hint" style="margin: 10px; color: blue;"></div>
+  <div id="result"></div>
+  <button onclick="nextQuestion()">次の問題</button>
+
+  <script>
+    const wordList = [
+     { jp: "～だろう，～するつもりだ，～してくれませんか", en: "will" },
+{ jp: "あれ，あの～，～ということ", en: "that" },
+{ jp: "言う", en: "say" },
+{ jp: "持っている，飼っている，食べる", en: "have" },
+{ jp: "見える，会う，わかる", en: "see" },
+{ jp: "そこに，そこへ，そこで", en: "there" },
+{ jp: "行く", en: "go" },
+{ jp: "これ，この～", en: "this" },
+{ jp: "日本の，日本人，日本語", en: "Japanese" },
+{ jp: "たくさんの，多数の", en: "many" },
+{ jp: "いくつかの，いくらかの", en: "some" },
+{ jp: "する", en: "do" },
+{ jp: "よい，上手な，りっぱな，仲のよい", en: "good" },
+{ jp: "～できる，～してもよい", en: "can" },
+{ jp: "何，何を", en: "what" },
+{ jp: "絵，写真", en: "picture" },
+{ jp: "学校", en: "school" },
+{ jp: "～が欲しい，～を欲しがっている", en: "want" },
+{ jp: "家族", en: "family" },
+{ jp: "父，お父さん", en: "father" },
+{ jp: "すずしい，冷静な", en: "cool" },
+{ jp: "訪問する，訪れる", en: "visit" },
+{ jp: "～が好き，～を好む，～のよう", en: "like" },
+{ jp: "来る", en: "come" },
+{ jp: "日，一日", en: "day" },
+{ jp: "そのとき，それでは，それから", en: "then" },
+{ jp: "上手に，うまく，よく，健康で", en: "well" },
+{ jp: "友達，友人", en: "friend" },
+{ jp: "思う，考える，～と思う", en: "think" },
+{ jp: "美しい，きれいな", en: "beautiful" },
+{ jp: "楽しむ", en: "enjoy" },
+{ jp: "見る，～に見える", en: "look" },
+{ jp: "次の，こんどの，となりの", en: "next" },
+{ jp: "いつ，～するとき，～したとき", en: "when" },
+{ jp: "ここに，ここヘ，ここで", en: "here" },
+{ jp: "生徒，学生", en: "student" },
+{ jp: "人々，国民", en: "people" },
+{ jp: "どのようにして，どれくらい", en: "how" },
+{ jp: "家", en: "house" },
+{ jp: "滞在する，泊まる，いる", en: "stay" },
+{ jp: "たいへん，とても，多量の", en: "much" },
+{ jp: "彼らは，彼女らは，それらは", en: "they" },
+{ jp: "なぜならば～だから", en: "because" },
+{ jp: "（スポーツを）する，（楽器を）演奏する，遊ぶ", en: "play" },
+{ jp: "時刻，時，時間", en: "time" },
+{ jp: "英語，英語の，イギリスの", en: "English" },
+{ jp: "ほんとうに，実際に", en: "really" },
+{ jp: "しかし，だが", en: "but" },
+{ jp: "幸福な，うれしい，楽しい", en: "happy" },
+{ jp: "集める，集まる", en: "collect" },
+{ jp: "今，現在，さて", en: "now" },
+{ jp: "場所，立場", en: "place" },
+{ jp: "知っている，知る", en: "know" },
+{ jp: "見せる，示す，案内する", en: "show" },
+{ jp: "あす", en: "tomorrow" },
+{ jp: "作る", en: "make" },
+{ jp: "年，一歳，学年", en: "year" },
+{ jp: "高い，高く", en: "high" },
+{ jp: "話す，話をする", en: "talk" },
+{ jp: "週，１週間", en: "week" },
+{ jp: "食べる", en: "eat" },
+{ jp: "より多く，もっと", en: "more" },
+{ jp: "集まり，仲間", en: "party" },
+{ jp: "～もまた，しかも", en: "too" },
+{ jp: "すばらしい，巨大な", en: "great" },
+{ jp: "彼（彼女）らを，それらを", en: "them" },
+{ jp: "午後", en: "afternoon" },
+{ jp: "年をとった，～歳の", en: "old" },
+{ jp: "夏，夏季", en: "summer" },
+{ jp: "列車", en: "train" },
+{ jp: "庭，庭園", en: "garden" },
+{ jp: "～をもらう，手に入れる", en: "get" },
+{ jp: "月，一ヶ月間", en: "month" },
+{ jp: "顔，表情，～に面する", en: "face" },
+{ jp: "母", en: "mother" },
+{ jp: "健康，健康状態", en: "health" },
+{ jp: "何か，いくらか（疑問文）", en: "any" },
+{ jp: "～を頼む，質問する", en: "ask" },
+{ jp: "～を買う", en: "buy" },
+{ jp: "遊び，試合", en: "game" },
+{ jp: "ほかの，別の", en: "other" },
+{ jp: "～を書く", en: "write" },
+{ jp: "駅，停留所", en: "station" },
+{ jp: "勉強，勉強する", en: "study" },
+{ jp: "確信して，きっと～する", en: "sure" },
+{ jp: "歩く，散歩する", en: "walk" },
+{ jp: "花", en: "flower" },
+{ jp: "望む，希望", en: "hope" },
+{ jp: "最後，最後の", en: "last" },
+{ jp: "良い，素晴らしい", en: "nice" },
+{ jp: "右，右側，正しい", en: "right" },
+{ jp: "出発する，始まる", en: "start" },
+{ jp: "国，国家", en: "country" },
+{ jp: "見つける，～に気づく", en: "find" },
+{ jp: "聞く，聞こえる", en: "hear" },
+{ jp: "～に会う", en: "meet" },
+{ jp: "お願いだから，どうか", en: "please" },
+{ jp: "感謝，～に感謝する", en: "thank" },
+{ jp: "今日，今日は", en: "today" },
+{ jp: "ビル，建物", en: "building" },
+{ jp: "祝祭，祭り", en: "festival" },
+{ jp: "（時間の）分", en: "minute" },
+{ jp: "映画", en: "movie" },
+{ jp: "しばしば，よく", en: "often" },
+{ jp: "公園，駐車する", en: "park" },
+{ jp: "歌う，鳴く", en: "sing" },
+{ jp: "お茶", en: "tea" },
+{ jp: "もの，事", en: "thing" },
+{ jp: "魚", en: "fish" },
+{ jp: "考え，アイデア", en: "idea" },
+{ jp: "関心があって，興味があって", en: "interested" },
+{ jp: "面白い，関心を引く", en: "interesting" },
+{ jp: "店，買い物をする", en: "shop" },
+{ jp: "歌", en: "song" },
+{ jp: "使う，利用する", en: "use" },
+{ jp: "～前に", en: "ago" },
+{ jp: "～になる", en: "become" },
+{ jp: "鳥", en: "bird" },
+{ jp: "電話，呼ぶ", en: "call" },
+{ jp: "授業，クラス", en: "class" },
+{ jp: "ギター", en: "guitar" },
+{ jp: "朝，午前", en: "morning" },
+{ jp: "～を話す", en: "tell" },
+{ jp: "これらは", en: "these" },
+{ jp: "なぜ，どうして", en: "why" },
+{ jp: "すべて(の)", en: "all" },
+{ jp: "市，都市", en: "city" },
+{ jp: "学ぶ，覚える", en: "learn" },
+{ jp: "昼食", en: "lunch" },
+{ jp: "私たちの", en: "our" },
+{ jp: "海", en: "sea" },
+{ jp: "旅行", en: "trip" },
+{ jp: "見る，腕時計", en: "watch" },
+{ jp: "クラブ，部", en: "club" },
+{ jp: "彼女の，彼女に", en: "her" },
+{ jp: "丘", en: "hill" },
+{ jp: "親切な，種類", en: "kind" },
+{ jp: "図書館", en: "library" },
+{ jp: "番組，プログラム", en: "program" },
+{ jp: "読む", en: "read" },
+{ jp: "先生", en: "teacher" },
+{ jp: "答える", en: "answer" },
+{ jp: "文化", en: "culture" },
+{ jp: "～ごとに，すべての～", en: "every" },
+{ jp: "空腹の，おなかをすかせる", en: "hungry" },
+{ jp: "やあ，こんにちは", en: "hello" },
+{ jp: "ふれる，届く", en: "touch" },
+{ jp: "町", en: "town" },
+{ jp: "～の前に", en: "before" },
+{ jp: "～した", en: "did" },
+{ jp: "特別の，特殊な", en: "special" },
+{ jp: "食べ物", en: "food" },
+{ jp: "もし～ならば", en: "if" },
+{ jp: "参加する", en: "join" },
+{ jp: "長い", en: "long" },
+{ jp: "メンバー，一員", en: "member" },
+{ jp: "覚えている，思い出す", en: "remember" },
+{ jp: "教える", en: "teach" },
+{ jp: "地球，大地", en: "earth" },
+{ jp: "どこに，どこへ", en: "where" },
+{ jp: "助ける，手伝う", en: "help" },
+{ jp: "１時間，６０分", en: "hour" },
+{ jp: "１００，１００の", en: "hundred" },
+{ jp: "湖", en: "lake" },
+{ jp: "～しましょう", en: "let's" },
+{ jp: "朝食", en: "breakfast" },
+{ jp: "話す，しゃべる", en: "speak" },
+{ jp: "どちら，どれ，どの～", en: "which" },
+{ jp: "世界", en: "world" },
+{ jp: "野球", en: "baseball" },
+{ jp: "バスケットボール", en: "basketball" },
+{ jp: "飛ぶ", en: "fly" },
+{ jp: "誕生日", en: "birthday" },
+{ jp: "連れてくる，持ってくる", en: "bring" },
+{ jp: "夕食", en: "dinner" },
+{ jp: "夢，夢を見る", en: "dream" },
+{ jp: "夕方，晩", en: "evening" },
+{ jp: "病院", en: "hospital" },
+{ jp: "農場，畑，農園", en: "farm" },
+{ jp: "手紙，文字", en: "letter" },
+{ jp: "音楽", en: "music" },
+{ jp: "インターネット", en: "Internet" },
+{ jp: "私たちを，私たちに", en: "us" },
+{ jp: "～を通り抜けて，通して", en: "through" },
+{ jp: "だれ，だれが", en: "who" },
+{ jp: "すばらしい", en: "wonderful" },
+{ jp: "～もまた，～も", en: "also" },
+{ jp: "与える，あげる", en: "give" },
+{ jp: "～の近くに，近い", en: "near" },
+{ jp: "眠る", en: "sleep" },
+{ jp: "計画，プラン", en: "plan" },
+{ jp: "まもなく，すぐ", en: "soon" },
+{ jp: "今もまだ，今でも", en: "still" },
+{ jp: "チーム", en: "team" },
+{ jp: "彼らの，彼女らの，それらの", en: "their" },
+{ jp: "川", en: "river" },
+{ jp: "感じる，～と思う", en: "feel" },
+{ jp: "集団，グループ", en: "group" },
+{ jp: "住む，住んでいる", en: "live" },
+{ jp: "山", en: "mountain" },
+{ jp: "博物館，美術館", en: "museum" },
+{ jp: "重要な，大切な", en: "important" },
+{ jp: "夜", en: "night" },
+{ jp: "選手，奏者", en: "player" },
+{ jp: "休み，休暇", en: "vacation" },
+{ jp: "～のまわりに，～のあちらこちらに", en: "around" },
+{ jp: "(総合）大学", en: "university" },
+{ jp: "演説，スピーチ", en: "speech" },
+{ jp: "canの過去形", en: "could" },
+{ jp: "～の間じゅう，～の間", en: "during" },
+{ jp: "生命，生活，生物", en: "life" },
+{ jp: "親", en: "parent" },
+{ jp: "人気のある", en: "popular" },
+{ jp: "短い，背が低い", en: "short" },
+{ jp: "春", en: "spring" },
+{ jp: "泳ぐ", en: "swim" },
+{ jp: "テニス", en: "tennis" },
+{ jp: "待つ", en: "wait" },
+{ jp: "道，やり方", en: "way" },
+{ jp: "飲む，飲み物", en: "drink" },
+{ jp: "働く，仕事", en: "work" },
+{ jp: "より良い，より上手に", en: "better" },
+{ jp: "子ども", en: "child" },
+{ jp: "すでに，もう", en: "already" },
+{ jp: "おのおの，それぞれ", en: "each" },
+{ jp: "歴史", en: "history" },
+{ jp: "高価な", en: "expensive" },
+{ jp: "自由な，ひまな", en: "free" },
+{ jp: "物語，話", en: "story" },
+{ jp: "通り，車道", en: "street" },
+{ jp: "背の高い", en: "tall" },
+{ jp: "一緒に", en: "together" },
+{ jp: "数学", en: "math" },
+{ jp: "試す，やってみる", en: "try" },
+{ jp: "動物", en: "animal" },
+{ jp: "科学", en: "science" },
+{ jp: "始まる，～を始める", en: "begin" },
+{ jp: "弱い", en: "weak" },
+{ jp: "両方，ともに", en: "both" },
+{ jp: "忙しい", en: "busy" },
+{ jp: "なやむ，心配する", en: "worry" },
+{ jp: "（山など）～を登る", en: "climb" },
+{ jp: "違っている，異なった", en: "different" },
+{ jp: "女性，婦人", en: "woman" },
+{ jp: "簡単な，容易な", en: "easy" },
+{ jp: "大きい，広い", en: "large" },
+{ jp: "決して～ない", en: "never" },
+{ jp: "贈り物，今，現在", en: "present" },
+{ jp: "自然", en: "nature" },
+{ jp: "乗る，乗車", en: "ride" },
+{ jp: "同じ，同一の", en: "same" },
+{ jp: "何か", en: "something" },
+{ jp: "～よりも", en: "than" },
+{ jp: "役に立つ，有益な", en: "useful" },
+{ jp: "出来事、行事", en: "event" },
+{ jp: "冬", en: "winter" },
+{ jp: "再び，もう一度", en: "again" },
+{ jp: "もう一つ", en: "another" },
+{ jp: "～の下に", en: "under" },
+{ jp: "コンピューター", en: "computer" },
+{ jp: "すべての人，みんな", en: "everyone" },
+{ jp: "興奮させる，刺激的な", en: "exciting" },
+{ jp: "素晴らしい，晴れた", en: "fine" },
+{ jp: "ちょうど，ぴったり", en: "just" },
+{ jp: "もっと遅い，より最近の", en: "later" },
+{ jp: "去る，出発する", en: "leave" },
+{ jp: "十分な、十分に", en: "enough" },
+{ jp: "送る，発送する", en: "send" },
+{ jp: "～すべきである", en: "should" },
+{ jp: "テーブル", en: "table" },
+{ jp: "１０００，１０００人", en: "thousand" },
+{ jp: "天気，天候", en: "weather" },
+{ jp: "木", en: "tree" },
+{ jp: "普通，いつもは", en: "usually" },
+{ jp: "白い，白", en: "white" },
+{ jp: "若い", en: "young" },
+{ jp: "着く，到着する", en: "arrive" },
+{ jp: "理由", en: "reason" },
+{ jp: "今までに，これまで", en: "ever" },
+{ jp: "お気に入りの，大好きな", en: "favorite" },
+{ jp: "実際に", en: "actually" },
+{ jp: "未来，将来", en: "future" },
+{ jp: "案内，知らせること", en: "information" },
+{ jp: "必要である", en: "need" },
+{ jp: "小さい", en: "small" },
+{ jp: "時々", en: "sometimes" },
+{ jp: "～に聞こえる，音", en: "sound" },
+{ jp: "～を信じる", en: "believe" },
+{ jp: "水", en: "water" },
+{ jp: "勝つ，獲得する", en: "win" },
+{ jp: "変える， つり銭", en: "change" },
+{ jp: "きれいな，掃除をする", en: "clean" },
+{ jp: "むずかしい，困難な", en: "difficult" },
+{ jp: "早く", en: "early" },
+{ jp: "遠くに，遠い", en: "far" },
+{ jp: "招待する，招く", en: "invite" },
+{ jp: "左", en: "left" },
+{ jp: "聞く", en: "listen" },
+{ jp: "～してもよい，～かもしれない", en: "may" },
+{ jp: "意味する", en: "mean" },
+{ jp: "～を解く", en: "solve" },
+{ jp: "たった～だけ", en: "only" },
+{ jp: "練習する， 練習", en: "practice" },
+{ jp: "季節", en: "season" },
+{ jp: "すまなく思って，残念な", en: "sorry" },
+{ jp: "石，石材", en: "stone" },
+{ jp: "～を忘れる", en: "forget" },
+{ jp: "伝統的な", en: "traditional" },
+{ jp: "問題", en: "problem" },
+{ jp: "昨日，昨日は", en: "yesterday" },
+{ jp: "いつも，つねに", en: "always" },
+{ jp: "ほとんど", en: "almost" },
+{ jp: "おいしい", en: "delicious" },
+{ jp: "good，wellの最上級", en: "best" },
+{ jp: "簡単に，容易に", en: "easily" },
+{ jp: "建てる，建設する，築く", en: "build" },
+{ jp: "機会，チャンス，好機，偶然，運", en: "chance" },
+{ jp: "childの複数形", en: "children" },
+{ jp: "色", en: "color" },
+{ jp: "借りる", en: "borrow" },
+{ jp: "娘", en: "daughter" },
+{ jp: "決める", en: "decide" },
+{ jp: "飲む，飲み物，酒", en: "drink" },
+{ jp: "何でも，何もかも", en: "everything" },
+{ jp: "有名な", en: "famous" },
+{ jp: "ほとんど無い，（ａをつけて）少しの,少数の", en: "few" },
+{ jp: "終える，終わる", en: "finish" },
+{ jp: "いっしょうけんめいに，  熱心に", en: "hard" },
+{ jp: "改善する，改良する", en: "improve" },
+{ jp: "many，muchの最上級", en: "most" },
+{ jp: "置く，入れる，のせる", en: "put" },
+{ jp: "スポーツ，運動", en: "sport" },
+{ jp: "理解する，わかる", en: "understand" },
+{ jp: "ようこそ，歓迎する", en: "welcome" },
+{ jp: "will notの短縮形， ～ないだろう， ～しようとしない", en: "won't" },
+{ jp: "言う", en: "say" },
+{ jp: "見える，会う，わかる", en: "see" },
+{ jp: "日本の，日本人，日本語", en: "Japanese" },
+{ jp: "～だろう，～するつもりだ，～してくれませんか", en: "will" },
+{ jp: "～できる，～してもよい", en: "can" },
+{ jp: "上手に，うまく，よく，健康で", en: "well" },
+{ jp: "家族", en: "family" },
+{ jp: "訪問する，訪れる，訪ねる", en: "visit" },
+{ jp: "ほんとうに，実際に", en: "really" },
+{ jp: "来る", en: "come" },
+{ jp: "思う，考える，～と思う", en: "think" },
+{ jp: "美しい，きれいな", en: "beautiful" },
+{ jp: "場所", en: "place" },
+{ jp: "週，１週間", en: "week" },
+{ jp: "人々，国民，民族", en: "people" },
+{ jp: "家", en: "house" },
+{ jp: "滞在する，泊まる，いる", en: "stay" },
+{ jp: "なぜならば～，～だから", en: "because" },
+{ jp: "ビル，建物", en: "building" },
+{ jp: "知っている，知る", en: "know" },
+{ jp: "見せる，示す，案内する", en: "show" },
+{ jp: "あす", en: "tomorrow" },
+{ jp: "作る", en: "make" },
+{ jp: "しばしば，よく", en: "often" },
+{ jp: "食べる", en: "eat" },
+{ jp: "午後", en: "afternoon" },
+{ jp: "歌う，鳴く", en: "sing" },
+{ jp: "月，一ヶ月間", en: "month" },
+{ jp: "第一番目の，最初の", en: "first" },
+{ jp: "～を頼む，質問する", en: "ask" },
+{ jp: "～を買う", en: "buy" },
+{ jp: "朝，午前", en: "morning" },
+{ jp: "勉強，勉強する", en: "study" },
+{ jp: "歩く，散歩する", en: "walk" },
+{ jp: "もし～ならば", en: "if" },
+{ jp: "出発する，始まる", en: "start" },
+{ jp: "国，国家", en: "country" },
+{ jp: "見つける，～に気づく", en: "find" },
+{ jp: "聞く，聞こえる", en: "hear" },
+{ jp: "～に会う", en: "meet" },
+{ jp: "使う，利用する", en: "use" },
+{ jp: "～になる", en: "become" },
+{ jp: "電話，呼ぶ", en: "call" },
+{ jp: "～を話す", en: "tell" },
+{ jp: "これらは", en: "these" },
+{ jp: "なぜ，どうして", en: "why" },
+{ jp: "学ぶ，覚える", en: "learn" },
+{ jp: "見る，腕時計", en: "watch" },
+{ jp: "図書館", en: "library" },
+{ jp: "読む", en: "read" },
+{ jp: "答える", en: "answer" },
+{ jp: "～の前に", en: "before" },
+{ jp: "食べ物", en: "food" },
+{ jp: "昼食", en: "lunch" },
+{ jp: "教える", en: "teach" },
+{ jp: "興奮した", en: "excited" },
+{ jp: "飛ぶ，飛行機で行く", en: "fly" },
+{ jp: "注意深く，慎重に", en: "carefully" },
+{ jp: "うれしい，喜んで", en: "glad" },
+{ jp: "重要な，大切な", en: "important" },
+{ jp: "紹介する，導入する", en: "introduce" },
+{ jp: "小さい，幼い，年下の，少しの，", en: "little" },
+{ jp: "動く，動かす，引っ越す", en: "move" },
+{ jp: "～しなければならない，～にちがいない", en: "must" },
+{ jp: "～の間で", en: "among" },
+{ jp: "経験，体験", en: "experience" },
+{ jp: "～以来，～からずっと，～して以来", en: "since" },
+{ jp: "起こる", en: "happen" },
+{ jp: "眠る，眠り，睡眠", en: "sleep" },
+{ jp: "壊す，割る", en: "break" },
+{ jp: "あれらは，それらは，", en: "those" },
+{ jp: "～として", en: "as" },
+{ jp: "おじ", en: "uncle" },
+{ jp: "～まで（ずっと）", en: "until" },
+{ jp: "役に立つ", en: "useful" },
+{ jp: "疲れた，飽きた", en: "tired" },
+{ jp: "状況，立場", en: "situation" },
+{ jp: "失う", en: "lose" },
+{ jp: "たぶん，おそらく", en: "maybe" },
+{ jp: "間，しばらくの間，～する間に", en: "while" },
+{ jp: "助ける，手伝う", en: "help" },
+{ jp: "１時間，６０分", en: "hour" },
+{ jp: "１００，１００の", en: "hundred" },
+{ jp: "湖", en: "lake" },
+{ jp: "話す，しゃべる", en: "speak" },
+{ jp: "世界", en: "world" },
+{ jp: "時々", en: "sometimes" },
+{ jp: "夕食", en: "dinner" },
+{ jp: "夢，夢を見る", en: "dream" },
+{ jp: "夕方，晩", en: "evening" },
+{ jp: "手紙，文字", en: "letter" },
+{ jp: "音楽", en: "music" },
+{ jp: "与える，あげる", en: "give" },
+{ jp: "感じる，～と思う", en: "feel" },
+{ jp: "住む，住んでいる", en: "live" },
+{ jp: "山", en: "mountain" },
+{ jp: "休み，休暇", en: "vacation" },
+{ jp: "(単科）大学", en: "college" },
+{ jp: "計画", en: "plan" },
+{ jp: "親", en: "parent" },
+{ jp: "人気のある", en: "popular" },
+{ jp: "泳ぐ", en: "swim" },
+{ jp: "待つ", en: "wait" },
+{ jp: "道，距離，やり方", en: "way" },
+{ jp: "働く，仕事", en: "work" },
+{ jp: "子ども", en: "child" },
+{ jp: "物語，話", en: "story" },
+{ jp: "背の高い", en: "tall" },
+{ jp: "試す，やってみる", en: "try" },
+{ jp: "始まる，～を始める", en: "begin" },
+{ jp: "誕生日", en: "birthday" },
+{ jp: "忙しい", en: "busy" },
+{ jp: "～を登る", en: "climb" },
+{ jp: "違っている，異なった", en: "different" },
+{ jp: "簡単な，容易な", en: "easy" },
+{ jp: "大きい，広い", en: "large" },
+{ jp: "何か", en: "something" },
+{ jp: "素晴らしい，晴れた", en: "fine" },
+{ jp: "去る，出発する", en: "leave" },
+{ jp: "～すべきである", en: "should" },
+{ jp: "若い", en: "young" },
+{ jp: "着く，到着する", en: "arrive" },
+{ jp: "お気に入りの，大好きな", en: "favorite" },
+{ jp: "未来，将来", en: "future" },
+{ jp: "変える，つり銭", en: "change" },
+{ jp: "きれいな，掃除をする", en: "clean" },
+{ jp: "むずかしい，困難な", en: "difficult" },
+{ jp: "早く", en: "early" },
+{ jp: "招待する，招く", en: "invite" },
+{ jp: "左", en: "left" },
+{ jp: "聞く", en: "listen" },
+{ jp: "～してもよい，～かもしれない", en: "may" },
+{ jp: "練習する，練習", en: "practice" },
+{ jp: "季節", en: "season" },
+{ jp: "昨日，昨日は", en: "yesterday" },
+
+    ];
+
+    let currentAnswer = "";
+    let currentMode = "jpToEn_write";
+    let hintCount = 0;
+    let lastIndex = -1;
+
+    function normalize(text) {
+      return text.trim().toLowerCase().replace(/[Ａ-Ｚａ-ｚ]/g, s =>
+        String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function nextQuestion() {
+      const filteredWords = wordList;
+      if (filteredWords.length === 0) return;
+
+      document.getElementById("result").textContent = "";
+      document.getElementById("hint").textContent = "";
+      hintCount = 0;
+      currentMode = document.getElementById("mode").value;
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * filteredWords.length);
+      } while (filteredWords.length > 1 && idx === lastIndex);
+      lastIndex = idx;
+      const q = filteredWords[idx];
+      currentAnswer = currentMode.includes("jpToEn") ? q.en : q.jp;
+
+      document.getElementById("question").textContent =
+        currentMode.includes("jpToEn") ? q.jp : q.en;
+
+      const area = document.getElementById("answerArea");
+      area.innerHTML = "";
+
+      if (currentMode === "jpToEn_write") {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "英語を入力";
+        input.id = "userInput";
+
+        const checkBtn = document.createElement("button");
+        checkBtn.textContent = "答え合わせ";
+        checkBtn.onclick = () => checkAnswer(input.value);
+
+        const hintBtn = document.createElement("button");
+        hintBtn.textContent = "わからない（ヒント）";
+        hintBtn.onclick = () => showHint();
+
+        input.onkeydown = e => { if (e.key === "Enter") checkAnswer(input.value); };
+
+        area.appendChild(input);
+        area.appendChild(document.createElement("br"));
+        area.appendChild(checkBtn);
+        area.appendChild(hintBtn);
+        input.focus();
+      } else {
+        const qObj = filteredWords[idx];
+        const otherChoices = shuffle(filteredWords.filter((w, i) => i !== idx)).slice(0, 3);
+        const choices = shuffle([qObj, ...otherChoices]);
+        const div = document.createElement("div");
+        div.className = "choices";
+        choices.forEach(choice => {
+          const btn = document.createElement("button");
+          btn.textContent = currentMode.includes("jpToEn") ? choice.en : choice.jp;
+          btn.onclick = () => checkAnswer(btn.textContent);
+          div.appendChild(btn);
+        });
+        area.appendChild(div);
+      }
+    }
+
+    function showHint() {
+      hintCount++;
+      const hintDiv = document.getElementById("hint");
+      if (hintCount === 1) {
+        const hint = currentAnswer.charAt(0).toLowerCase();
+        hintDiv.textContent = `ヒント：${hint}...`;
+      } else if (hintCount === 2) {
+        const firstChar = currentAnswer.charAt(0).toLowerCase();
+        const restHint = Array.from(currentAnswer).slice(1).map(() => "＿").join(" ");
+        const span = document.createElement("span");
+        span.className = "hint-underline";
+        span.textContent = `（文字数：${firstChar} ${restHint}）`;
+        hintDiv.appendChild(document.createElement("br"));
+        hintDiv.appendChild(span);
+      }
+    }
+
+    function checkAnswer(userInput) {
+      const normUser = normalize(userInput);
+      const normAnswer = normalize(currentAnswer);
+      const result = document.getElementById("result");
+      if (normUser === normAnswer) {
+        result.textContent = "正解！";
+        result.style.color = "green";
+      } else {
+        result.textContent = `不正解。正解は「${currentAnswer}」`;
+        result.style.color = "red";
+      }
+    }
+
+    window.onload = nextQuestion;
+  </script>
+</body>
+</html>
