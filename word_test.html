@@ -543,10 +543,12 @@
       area.innerHTML = "";
 
       if (currentMode === "jpToEn_write") {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.placeholder = "英語を入力";
-        input.id = "userInput";
+        const label = document.createElement("label");
+label.htmlFor = "userInput";
+label.textContent = "英語を入力：";
+
+area.appendChild(label);
+area.appendChild(input);
 
         const checkBtn = document.createElement("button");
         checkBtn.textContent = "答え合わせ";
